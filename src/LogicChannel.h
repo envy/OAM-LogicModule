@@ -93,11 +93,11 @@
 #define BIT_FIRST_PROCESSING 0x20
 #define BIT_PREVIOUS_GATE 0x40
 
-#define BIT_OUTPUT_LOGIC 0x01    
+#define BIT_OUTPUT_LOGIC 0x01
 #define BIT_OUTPUT_BLINK 0x02
 #define BIT_OUTPUT_PREVIOUS 0x04
 #define BIT_OUTPUT_INITIAL 0x08
-#define BIT_OUTPUT_DEBUG 0x10    
+#define BIT_OUTPUT_DEBUG 0x10
 
 // enum fo IOIndex
 #define IO_Absolute 0

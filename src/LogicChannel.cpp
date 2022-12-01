@@ -233,7 +233,7 @@ Dpt &LogicChannel::getKoDPT(uint8_t iIOIndex)
 // write value to bus
 void LogicChannel::knxWriteBool(uint8_t iIOIndex, bool iValue)
 {
-#if LOGIC_TRACE    
+#if LOGIC_TRACE
     channelDebug("knxWrite KO %d bool value %d\n", calcKoNumber(iIOIndex), iValue);
 #endif
     getKo(iIOIndex)->value(iValue, getKoDPT(iIOIndex));
@@ -292,7 +292,7 @@ void LogicChannel::knxResetDevice(uint16_t iParamIndex)
     uint8_t lHigh = lAddress >> 8;
     channelDebug("knxResetDevice with PA %d.%d.%d\n", lHigh >> 4, lHigh & 0xF, lAddress & 0xFF);
 #endif
-    if (lAddress == lLocalAddress) 
+    if (lAddress == lLocalAddress)
     {
         // here we have to do a local restart (restart own device), conceptually clear, but interfaces have to be checked
         // if (_beforeRestart != 0)
@@ -650,7 +650,7 @@ void LogicChannel::startStartup()
     pOnDelay = millis();
     pCurrentPipeline |= PIP_STARTUP;
 #if LOGIC_TRACE
-    if (debugFilter()) 
+    if (debugFilter())
     {
         channelDebug("startStartup: wait for %i s\n", getIntParam(LOG_fChannelDelay));
     }
@@ -797,7 +797,7 @@ bool LogicChannel::checkConvertValues(uint16_t iParamValues, uint8_t iDpt, int32
     }
     for (uint8_t lIndex = 0, lShift = 0x80; lIndex < lNumValues && !lValueOut; lIndex++, lShift >>= 1)
     {
-        if (lValid & lShift) 
+        if (lValid & lShift)
         {
             // we check just valid values
             uValue lValue = getParamByDpt(iDpt, iParamValues + lIndex * lValueSize);
@@ -980,7 +980,7 @@ void LogicChannel::startLogic(uint8_t iIOIndex, bool iValue)
     pTriggerIO |= iIOIndex;
     // finally set the pipeline bit
     pCurrentPipeline |= PIP_LOGIC_EXECUTE;
-#if LOGIC_TRACE  
+#if LOGIC_TRACE
     if (debugFilter())
     {
         channelDebug("startLogic: Input %s%i; Value %i\n", (iIOIndex & (BIT_EXT_INPUT_1 | BIT_EXT_INPUT_2)) ? "E" : "I", (iIOIndex & (BIT_EXT_INPUT_1 | BIT_INT_INPUT_1)) ? 1 : 2, lValue);
@@ -1044,8 +1044,8 @@ void LogicChannel::processLogic()
                 break;
             case VAL_Logic_Switch:
                 // Switch cannot handle invalid inputs but is based on telegrams (trigger in this class)
-                // An ON-trigger on input 1 turns OUTPUT to 1 (Set of FlipFlop) 
-                if ((BIT_EXT_INPUT_1 & pTriggerIO & lCurrentInputs) || (BIT_INT_INPUT_1 & pTriggerIO & lCurrentInputs)) 
+                // An ON-trigger on input 1 turns OUTPUT to 1 (Set of FlipFlop)
+                if ((BIT_EXT_INPUT_1 & pTriggerIO & lCurrentInputs) || (BIT_INT_INPUT_1 & pTriggerIO & lCurrentInputs))
                 {
                     lNewOutput = true;
                     lValidOutput = true;
@@ -1066,7 +1066,7 @@ void LogicChannel::processLogic()
                 // Invalid data is handled as ???
                 {
                     // Invalid gate is a closed gate (0), as described in app doc
-                    // if the behaviour should be changed (invalid is open), 
+                    // if the behaviour should be changed (invalid is open),
                     // just change the init (for gate and previous) to true.
                     bool lGate = false;
                     bool lPreviousGate = false;
@@ -1173,7 +1173,7 @@ void LogicChannel::processLogic()
                 else
                 {
                     // if first telegram is suppressed, we nevertheless
-                    // remove the initial marker. 
+                    // remove the initial marker.
                     pCurrentOut &= ~BIT_OUTPUT_INITIAL;
                 }
                 pCurrentIn |= BIT_FIRST_PROCESSING; //first processing was done
@@ -1184,7 +1184,7 @@ void LogicChannel::processLogic()
                 lDebugValid = true;
                 if (debugFilter())
                 {
-                    if (lTrigger == 0 && lNewOutput == lCurrentOutput) { 
+                    if (lTrigger == 0 && lNewOutput == lCurrentOutput) {
                         channelDebug("endedLogic: No execution, Logic %s, Value %i (Value not changed)\n", lDebugLogic, lNewOutput);
                     }
                     else if ((lTrigger & pTriggerIO) == 0) {
@@ -1228,7 +1228,7 @@ void LogicChannel::startStairlight(bool iOutput)
                 // stairlight is not running or may be re-triggered
                 // we init the stairlight timer
 #if LOGIC_TRACE
-                if (debugFilter()) 
+                if (debugFilter())
                 {
                     if (lRetrigger) {
                         channelDebug("retriggerStairlight: Factor %i, Base %s\n", lStairTime, (lStairTimeBase == 0) ? "sec/10" : (lStairTimeBase == 1) ? "sec" : (lStairTimeBase == 2) ? "min" : "h");
@@ -1255,7 +1255,7 @@ void LogicChannel::startStairlight(bool iOutput)
                 // we set the timer to 0
                 pStairlightDelay = 0;
 #if LOGIC_TRACE
-                if (debugFilter()) 
+                if (debugFilter())
                 {
                     channelDebug("turnOffStairlight: Factor %i, Base %s\n", lStairTime, (lStairTimeBase == 0) ? "sec/10" : (lStairTimeBase == 1) ? "sec" : (lStairTimeBase == 2) ? "min" : "h");
                 }
@@ -1279,7 +1279,7 @@ void LogicChannel::processStairlight()
     if (pStairlightDelay == 0 || delayCheck(pStairlightDelay, getTimeDelayParam(LOG_fOStairtimeBase)))
     {
 #if LOGIC_TRACE
-        if (debugFilter()) 
+        if (debugFilter())
         {
             if (pCurrentPipeline & PIP_BLINK) {
                 channelDebug("endedBlink");
@@ -1355,7 +1355,7 @@ void LogicChannel::startOnDelay()
     uint8_t lOnDelayRepeat = (lOnDelay & LOG_fODelayOnRepeatMask) >> LOG_fODelayOnRepeatShift;
     if ((pCurrentPipeline & PIP_ON_DELAY) == 0)
     {
-        // on delay is not running, we start it 
+        // on delay is not running, we start it
         pOnDelay = delayTimerInit();
         pCurrentPipeline |= PIP_ON_DELAY;
 #if LOGIC_TRACE
@@ -2453,7 +2453,7 @@ void LogicChannel::processTimerRestoreState(TimerRestore &iTimer)
 
                 // at this point we know, that this timer is valid for this day
                 // now we get the right switch time for that day
-                    
+
                 switch (lTimerFunction)
                 {
                     case VAL_Tim_PointInTime:
@@ -2578,4 +2578,3 @@ int16_t LogicChannel::getSunLimit(Timer &iTimer, uint8_t iSunInfo, uint8_t iTime
     int16_t lResult = getTimerTime(iTimer, iTimerIndex, iBitfield, lHour, lMinute, iSkipWeekday, iHandleAsSunday);
     return lResult;
 }
-

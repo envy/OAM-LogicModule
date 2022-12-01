@@ -10,12 +10,12 @@ Dpt &getDPT(uint8_t iDptIndex)
 /***********************************************************
  * calculate delay from 2 byte delay pattern used in knxprod
  * iAsSeconds: true=return seconds, false=return milliseconds
- * first 2 bit: 
+ * first 2 bit:
  *   00 - seconds
  *   01 - minutes
  *   10 - hours
  *   11 - seconds/10
- * 
+ *
  * remaining 14 bit: uint14
 */
 uint32_t getDelayPattern(uint16_t iParamIndex, bool iAsSeconds /* = false */) {

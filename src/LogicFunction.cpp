@@ -1,4 +1,3 @@
-#include "KnxHelper.h"
 #include "LogicFunction.h"
 
 // native functions, implemented as a simple example how to use user functions
