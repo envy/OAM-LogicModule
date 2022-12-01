@@ -27,6 +27,10 @@ LogicChannel::LogicChannel(uint8_t iChannelNumber)
     pTriggerIO = 0;
     pCurrentIn = 0;
     pCurrentOut = BIT_OUTPUT_INITIAL; // tri-state output, at the beginning we are undefined
+
+    pOutputValid = false;
+    pLastOutputValue = { .intValue = 0 };
+    pOutputDpt = VAL_DPT_1;
 }
 
 LogicChannel::~LogicChannel()
@@ -376,6 +380,13 @@ void LogicChannel::setBuzzer(uint16_t iParamIndex)
 #endif
 }
 
+void LogicChannel::setOutputValue(uValue iValue, uint8_t iDpt)
+{
+    pLastOutputValue = iValue;
+    pOutputDpt = iDpt;
+    pOutputValid = true;
+}
+
 /********************************
  * Logic helper functions
  * *****************************/
@@ -496,49 +507,59 @@ void LogicChannel::writeConstantValue(uint16_t iParamIndex)
         case VAL_DPT_1:
             bool lValueBool;
             lValueBool = getByteParam(iParamIndex) != 0;
+            setOutputValue({ .intValue = getByteParam(iParamIndex) }, lDpt);
             knxWriteBool(IO_Output, lValueBool);
             break;
         case VAL_DPT_2:
             lValueByte = getByteParam(iParamIndex);
+            setOutputValue({ .intValue = getByteParam(iParamIndex) }, lDpt);
             knxWriteRawInt(IO_Output, lValueByte);
             break;
         case VAL_DPT_5:
         case VAL_DPT_5001: // correct value is calculated by dpt handling
             lValueByte = getByteParam(iParamIndex);
+            setOutputValue({ .intValue = getByteParam(iParamIndex) }, lDpt);
             knxWriteInt(IO_Output, lValueByte);
             break;
         case VAL_DPT_17:
             lValueByte = getByteParam(iParamIndex) - 1;
+            setOutputValue({ .intValue = getByteParam(iParamIndex) - 1 }, lDpt);
             knxWriteInt(IO_Output, lValueByte);
             break;
         case VAL_DPT_6:
             int8_t lValueInt;
             lValueInt = getSByteParam(iParamIndex);
+            setOutputValue({ .intValue = getSByteParam(iParamIndex) }, lDpt);
             knxWriteRawInt(IO_Output, lValueInt);
             break;
         case VAL_DPT_7:
             uint16_t lValueUWord;
             lValueUWord = getWordParam(iParamIndex);
+            setOutputValue({ .intValue = getWordParam(iParamIndex) }, lDpt);
             knxWriteInt(IO_Output, lValueUWord);
             break;
         case VAL_DPT_8:
             int16_t lValueSWord;
             lValueSWord = getSWordParam(iParamIndex);
+            setOutputValue({ .intValue = getSWordParam(iParamIndex) }, lDpt);
             knxWriteInt(IO_Output, lValueSWord);
             break;
         case VAL_DPT_9:
             float lValueFloat;
             lValueFloat = getFloatParam(iParamIndex);
+            setOutputValue({ .floatValue = getFloatParam(iParamIndex) }, lDpt);
             knxWriteFloat(IO_Output, lValueFloat);
             break;
         case VAL_DPT_16:
             uint8_t *lValueStr;
             lValueStr = getStringParam(iParamIndex);
+            // setOutputValue({ .intValue = getParam(iParamIndex) }, lDpt); // TODO: add string to uValue
             knxWriteString(IO_Output, (char *)lValueStr);
             break;
         case VAL_DPT_232:
             int32_t lValueRGB;
             lValueRGB = getIntParam(iParamIndex) >> 8;
+            setOutputValue({ .intValue = (int32_t)(getIntParam(iParamIndex) >> 8) }, lDpt);
             knxWriteInt(IO_Output, lValueRGB);
             break;
         default:
@@ -557,10 +578,17 @@ void LogicChannel::writeParameterValue(uint8_t iIOIndex)
 void LogicChannel::writeFunctionValue(uint16_t iParamIndex)
 {
     uint8_t lFunction = getByteParam(iParamIndex);
-    uValue lE1 = getInputValue(BIT_EXT_INPUT_1);
-    uValue lE2 = getInputValue(BIT_EXT_INPUT_2);
-    uint8_t lDptE1 = getByteParam(LOG_fE1Dpt);
-    uint8_t lDptE2 = getByteParam(LOG_fE2Dpt);
+    uint8_t lI1Active = getByteParam(LOG_fI1);
+    uint8_t lFunction1 = getByteParam(LOG_fI1Function);
+    uint8_t lI2Active = getByteParam(LOG_fI2);
+    uint8_t lFunction2 = getByteParam(LOG_fI2Function);
+
+    uValue lE1 = (lI1Active && sLogic->getChannel(lFunction1 - 1)->pOutputValid) ? sLogic->getChannel(lFunction1 - 1)->pLastOutputValue : getInputValue(BIT_EXT_INPUT_1);
+    uValue lE2 = (lI2Active && sLogic->getChannel(lFunction2 - 1)->pOutputValid) ? sLogic->getChannel(lFunction2 - 1)->pLastOutputValue : getInputValue(BIT_EXT_INPUT_2);
+
+    uint8_t lDptE1 = (lI1Active && sLogic->getChannel(lFunction1 - 1)->pOutputValid) ? sLogic->getChannel(lFunction1 - 1)->pOutputDpt : getByteParam(LOG_fE1Dpt);
+    uint8_t lDptE2 = (lI2Active && sLogic->getChannel(lFunction2 - 1)->pOutputValid) ? sLogic->getChannel(lFunction2 - 1)->pOutputDpt : getByteParam(LOG_fE2Dpt);
+
     uint8_t lDptOut = getByteParam(LOG_fODpt);
     uValue lValue = LogicFunction::callFunction(lFunction, lDptE1, lE1, lDptE2, lE2, &lDptOut);
     writeValue(lValue, lDptOut);
@@ -578,11 +606,13 @@ void LogicChannel::writeValue(uValue iValue, uint8_t iDpt)
     {
         case VAL_DPT_1:
             lValueBool = iValue.intValue != 0;
+            setOutputValue(iValue, lDpt);
             knxWriteBool(IO_Output, lValueBool);
             break;
         case VAL_DPT_2:
             lValueByte = abs(iValue.intValue);
             lValueByte &= 3;
+            setOutputValue(iValue, lDpt);
             knxWriteRawInt(IO_Output, lValueByte);
             break;
         case VAL_DPT_5:
@@ -590,6 +620,7 @@ void LogicChannel::writeValue(uValue iValue, uint8_t iDpt)
             iValue.intValue = abs(iValue.intValue);
         case VAL_DPT_6:
             lValueByte = iValue.intValue;
+            setOutputValue(iValue, lDpt);
             knxWriteInt(IO_Output, lValueByte);
             break;
             // lValueByte = lValue;
@@ -602,22 +633,27 @@ void LogicChannel::writeValue(uValue iValue, uint8_t iDpt)
             iValue.intValue = abs(iValue.intValue);
         case VAL_DPT_8:
             lValueWord = iValue.intValue;
+            setOutputValue(iValue, lDpt);
             knxWriteInt(IO_Output, lValueWord);
             break;
         case VAL_DPT_9:
             lValueFloat = iValue.floatValue;
+            setOutputValue(iValue, lDpt);
             knxWriteFloat(IO_Output, lValueFloat);
             break;
         case VAL_DPT_16:
             sprintf(lValueStr, "%ld", iValue);
+            setOutputValue(iValue, lDpt);
             knxWriteString(IO_Output, lValueStr);
             break;
         case VAL_DPT_17:
             lValueByte = abs(iValue.intValue);
             lValueByte &= 0x3F;
+            setOutputValue(iValue, lDpt);
             knxWriteInt(IO_Output, lValueByte);
             break;
         case VAL_DPT_232:
+            setOutputValue(iValue, lDpt);
             knxWriteInt(IO_Output, iValue.intValue);
             break;
         default:

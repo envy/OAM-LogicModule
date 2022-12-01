@@ -233,6 +233,7 @@ class LogicChannel
     void writeValue(uValue iValue, uint8_t iDpt);
     void setRGBColor(uint16_t iParamIndex);
     void setBuzzer(uint16_t iParamIndex);
+    void setOutputValue(uValue iValue, uint8_t iDpt);
 
     bool isInputActive(uint8_t iIOIndex);
     bool isInputValid(uint8_t iIOIndex);
@@ -316,6 +317,10 @@ class LogicChannel
     uint32_t pOnDelay;
     uint32_t pOffDelay;
     uint32_t pRepeatOnOffDelay;
+
+    bool pOutputValid;
+    uValue pLastOutputValue;
+    uint8_t pOutputDpt;
 
   public:
     // Constructors

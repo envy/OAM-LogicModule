@@ -46,6 +46,7 @@ class Logic
     // instance
     void addKoLookup(uint16_t iKoNumber, uint8_t iChannelId, uint8_t iIOIndex);
     bool getKoLookup(uint16_t iKoNumber, sKoLookup **iKoLookup = nullptr);
+    LogicChannel *getChannel(uint8_t iChannelId);
 
     EepromManager *getEEPROM();
     const uint8_t *getFlash();
@@ -83,7 +84,6 @@ class Logic
     EepromManager *mEEPROM;
     const uint8_t *mFlashBuffer = nullptr; // Pointer to stored flash content
 
-    LogicChannel *getChannel(uint8_t iChannelId);
     uint8_t getChannelId(LogicChannel *iChannel);
     bool prepareChannels();
 
